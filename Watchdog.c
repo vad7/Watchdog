@@ -7,7 +7,7 @@
  * ATTiny4/5/9/10
  *
  * Connections:
- * pin 1 (PB0) -> to RESET
+ * pin 1 (PB0) -> to RESET external mk
  * pin 4 (PB2) <- input signal to clear timer
  */ 
 #define F_CPU 128000UL
@@ -21,8 +21,12 @@
 #define WATCHDOG_TIMEOUT 600 //  *0.1 sec
 
 #define EXT_RESET		(1<<PINB0)
+#define EXT_RESET_ON	DDRB |= EXT_RESET	// out, low
+#define EXT_RESET_OFF	DDRB &= ~EXT_RESET	// in
+/* Pullup RESET pin (20kOm):
 #define EXT_RESET_ON	{ PUEB &= ~EXT_RESET; DDRB |= EXT_RESET; } // out, low
 #define EXT_RESET_OFF	{ DDRB &= ~EXT_RESET; PUEB |= EXT_RESET; } // in, pullup
+*/
 
 uint16_t watchdog_timer = 0;
 
@@ -43,6 +47,7 @@ ISR(TIM0_OVF_vect) // 0.1 s
 
 int main(void)
 {
+	PUEB = (1<<PORTB1); // pullup unused pins
 	EXT_RESET_OFF;
 	CCP=0xD8; CLKMSR = (0<<CLKMS0) | (1<<CLKMS0); // Internal 128 KHz oscillator
 	CCP=0xD8; CLKPSR = (0<<CLKPS3) | (0<<CLKPS2) | (0<<CLKPS1) | (0<<CLKPS0); // Clock prescaler division factor: 1
