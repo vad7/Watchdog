@@ -1,0 +1,195 @@
+
+Watchdog.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000000d2  00000000  00000000  00000094  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800040  000000d2  00000166  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          00000002  00800040  00800040  00000166  2**0
+                  ALLOC
+  3 .comment      00000030  00000000  00000000  00000166  2**0
+                  CONTENTS, READONLY
+  4 .debug_aranges 00000030  00000000  00000000  00000196  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  5 .debug_info   000000d0  00000000  00000000  000001c6  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_abbrev 0000007c  00000000  00000000  00000296  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_line   000000e3  00000000  00000000  00000312  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_frame  0000006c  00000000  00000000  000003f8  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_str    00000130  00000000  00000000  00000464  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_loc    00000085  00000000  00000000  00000594  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000020  00000000  00000000  00000619  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0a c0       	rjmp	.+20     	; 0x16 <__ctors_end>
+   2:	1a c0       	rjmp	.+52     	; 0x38 <__vector_1>
+   4:	18 c0       	rjmp	.+48     	; 0x36 <__bad_interrupt>
+   6:	17 c0       	rjmp	.+46     	; 0x36 <__bad_interrupt>
+   8:	23 c0       	rjmp	.+70     	; 0x50 <__vector_4>
+   a:	15 c0       	rjmp	.+42     	; 0x36 <__bad_interrupt>
+   c:	14 c0       	rjmp	.+40     	; 0x36 <__bad_interrupt>
+   e:	13 c0       	rjmp	.+38     	; 0x36 <__bad_interrupt>
+  10:	12 c0       	rjmp	.+36     	; 0x36 <__bad_interrupt>
+  12:	11 c0       	rjmp	.+34     	; 0x36 <__bad_interrupt>
+  14:	10 c0       	rjmp	.+32     	; 0x36 <__bad_interrupt>
+
+00000016 <__ctors_end>:
+  16:	11 27       	eor	r17, r17
+  18:	1f bf       	out	0x3f, r17	; 63
+  1a:	cf e5       	ldi	r28, 0x5F	; 95
+  1c:	d0 e0       	ldi	r29, 0x00	; 0
+  1e:	de bf       	out	0x3e, r29	; 62
+  20:	cd bf       	out	0x3d, r28	; 61
+
+00000022 <__do_clear_bss>:
+  22:	20 e0       	ldi	r18, 0x00	; 0
+  24:	a0 e4       	ldi	r26, 0x40	; 64
+  26:	b0 e0       	ldi	r27, 0x00	; 0
+  28:	01 c0       	rjmp	.+2      	; 0x2c <.do_clear_bss_start>
+
+0000002a <.do_clear_bss_loop>:
+  2a:	1d 93       	st	X+, r17
+
+0000002c <.do_clear_bss_start>:
+  2c:	a2 34       	cpi	r26, 0x42	; 66
+  2e:	b2 07       	cpc	r27, r18
+  30:	e1 f7       	brne	.-8      	; 0x2a <.do_clear_bss_loop>
+  32:	32 d0       	rcall	.+100    	; 0x98 <main>
+  34:	4c c0       	rjmp	.+152    	; 0xce <_exit>
+
+00000036 <__bad_interrupt>:
+  36:	e4 cf       	rjmp	.-56     	; 0x0 <__vectors>
+
+00000038 <__vector_1>:
+#define EXT_RESET_OFF	{ DDRB &= ~EXT_RESET; PUEB |= EXT_RESET; } // in, pullup
+
+uint16_t watchdog_timer = 0;
+
+ISR(INT0_vect)
+{
+  38:	1f 93       	push	r17
+  3a:	0f 93       	push	r16
+  3c:	0f b7       	in	r16, 0x3f	; 63
+  3e:	0f 93       	push	r16
+  40:	10 e0       	ldi	r17, 0x00	; 0
+	watchdog_timer = 0;
+  42:	11 a9       	sts	0x41, r17
+  44:	10 a9       	sts	0x40, r17
+}
+  46:	0f 91       	pop	r16
+  48:	0f bf       	out	0x3f, r16	; 63
+  4a:	0f 91       	pop	r16
+  4c:	1f 91       	pop	r17
+  4e:	18 95       	reti
+
+00000050 <__vector_4>:
+
+ISR(TIM0_OVF_vect) // 0.1 s
+{
+  50:	1f 93       	push	r17
+  52:	0f 93       	push	r16
+  54:	0f b7       	in	r16, 0x3f	; 63
+  56:	0f 93       	push	r16
+  58:	10 e0       	ldi	r17, 0x00	; 0
+  5a:	4f 93       	push	r20
+  5c:	5f 93       	push	r21
+  5e:	6f 93       	push	r22
+	if(++watchdog_timer == WATCHDOG_TIMEOUT) {
+  60:	40 a1       	lds	r20, 0x40
+  62:	51 a1       	lds	r21, 0x41
+  64:	4f 5f       	subi	r20, 0xFF	; 255
+  66:	5f 4f       	sbci	r21, 0xFF	; 255
+  68:	51 a9       	sts	0x41, r21
+  6a:	40 a9       	sts	0x40, r20
+  6c:	48 35       	cpi	r20, 0x58	; 88
+  6e:	62 e0       	ldi	r22, 0x02	; 2
+  70:	56 07       	cpc	r21, r22
+  72:	19 f4       	brne	.+6      	; 0x7a <__stack+0x1b>
+		EXT_RESET_ON;
+  74:	18 98       	cbi	0x03, 0	; 3
+  76:	08 9a       	sbi	0x01, 0	; 1
+  78:	07 c0       	rjmp	.+14     	; 0x88 <__stack+0x29>
+	} else if(watchdog_timer > WATCHDOG_TIMEOUT) {
+  7a:	49 35       	cpi	r20, 0x59	; 89
+  7c:	52 40       	sbci	r21, 0x02	; 2
+  7e:	20 f0       	brcs	.+8      	; 0x88 <__stack+0x29>
+		watchdog_timer = 0;
+  80:	11 a9       	sts	0x41, r17
+  82:	10 a9       	sts	0x40, r17
+		EXT_RESET_OFF;
+  84:	08 98       	cbi	0x01, 0	; 1
+  86:	18 9a       	sbi	0x03, 0	; 3
+	}
+}
+  88:	6f 91       	pop	r22
+  8a:	5f 91       	pop	r21
+  8c:	4f 91       	pop	r20
+  8e:	0f 91       	pop	r16
+  90:	0f bf       	out	0x3f, r16	; 63
+  92:	0f 91       	pop	r16
+  94:	1f 91       	pop	r17
+  96:	18 95       	reti
+
+00000098 <main>:
+
+int main(void)
+{
+	EXT_RESET_OFF;
+  98:	08 98       	cbi	0x01, 0	; 1
+  9a:	18 9a       	sbi	0x03, 0	; 3
+	CCP=0xD8; CLKMSR = (0<<CLKMS0) | (1<<CLKMS0); // Internal 128 KHz oscillator
+  9c:	48 ed       	ldi	r20, 0xD8	; 216
+  9e:	4c bf       	out	0x3c, r20	; 60
+  a0:	61 e0       	ldi	r22, 0x01	; 1
+  a2:	67 bf       	out	0x37, r22	; 55
+	CCP=0xD8; CLKPSR = (0<<CLKPS3) | (0<<CLKPS2) | (0<<CLKPS1) | (0<<CLKPS0); // Clock prescaler division factor: 1
+  a4:	4c bf       	out	0x3c, r20	; 60
+  a6:	16 bf       	out	0x36, r17	; 54
+	CCP=0xD8; WDTCSR = (1<<WDE) | (0<<WDP3) | (1<<WDP2) | (1<<WDP1) | (0<<WDP0); //  Watchdog Reset 1s
+  a8:	4c bf       	out	0x3c, r20	; 60
+  aa:	4e e0       	ldi	r20, 0x0E	; 14
+  ac:	41 bf       	out	0x31, r20	; 49
+	EICRA = (0<<ISC01) | (1<<ISC00); // Any logical change on INT0 generates an interrupt
+  ae:	65 bb       	out	0x15, r22	; 21
+	EIMSK = (1<<INT0); // INT0: External Interrupt Request 0 Enable
+  b0:	63 bb       	out	0x13, r22	; 19
+	TCCR0A = (1<<WGM01) | (1<<WGM00);  // Timer0: Fast PWM OCR0A  
+  b2:	43 e0       	ldi	r20, 0x03	; 3
+  b4:	4e bd       	out	0x2e, r20	; 46
+	TCCR0B = (1<<WGM03) | (1<<WGM02) | (0<<CS02) | (0<<CS01) | (1<<CS00); // Timer0 prescaller: 1
+  b6:	49 e1       	ldi	r20, 0x19	; 25
+  b8:	4d bd       	out	0x2d, r20	; 45
+	TIMSK0 = (1<<TOIE0); // Timer/Counter0 Overflow Interrupt Enable
+  ba:	6b bd       	out	0x2b, r22	; 43
+	OCR0A = 12799; // OC0A(TOP)=Fclk/prescaller/Freq - 1; Freq=Fclk/(prescaller*(1+TOP))
+  bc:	4f ef       	ldi	r20, 0xFF	; 255
+  be:	51 e3       	ldi	r21, 0x31	; 49
+  c0:	57 bd       	out	0x27, r21	; 39
+  c2:	46 bd       	out	0x26, r20	; 38
+	SMCR = (1<<SE); // Sleep Idle enable
+  c4:	6a bf       	out	0x3a, r22	; 58
+	sei();
+  c6:	78 94       	sei
+    while(1)
+	{
+		wdt_reset();
+  c8:	a8 95       	wdr
+		sleep_cpu();
+  ca:	88 95       	sleep
+  cc:	fd cf       	rjmp	.-6      	; 0xc8 <main+0x30>
+
+000000ce <_exit>:
+  ce:	f8 94       	cli
+
+000000d0 <__stop_program>:
+  d0:	ff cf       	rjmp	.-2      	; 0xd0 <__stop_program>
