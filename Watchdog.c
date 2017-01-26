@@ -39,8 +39,8 @@ ISR(TIM0_OVF_vect) // 0.1 s
 {
 	if(++watchdog_timer == WATCHDOG_TIMEOUT) {
 		EXT_RESET_ON;
-	} else if(watchdog_timer > WATCHDOG_TIMEOUT) {
-		watchdog_timer = 0;
+	} else {
+		if(watchdog_timer > WATCHDOG_TIMEOUT) watchdog_timer = 0;
 		EXT_RESET_OFF;
 	}
 }

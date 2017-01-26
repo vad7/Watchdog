@@ -118,11 +118,11 @@ ISR(TIM0_OVF_vect) // 0.1 s
 		EXT_RESET_ON;
   74:	08 9a       	sbi	0x01, 0	; 1
   76:	06 c0       	rjmp	.+12     	; 0x84 <__stack+0x25>
-	} else if(watchdog_timer > WATCHDOG_TIMEOUT) {
+	} else {
+		if(watchdog_timer > WATCHDOG_TIMEOUT) watchdog_timer = 0;
   78:	49 35       	cpi	r20, 0x59	; 89
   7a:	52 40       	sbci	r21, 0x02	; 2
-  7c:	18 f0       	brcs	.+6      	; 0x84 <__stack+0x25>
-		watchdog_timer = 0;
+  7c:	10 f0       	brcs	.+4      	; 0x82 <__stack+0x23>
   7e:	11 a9       	sts	0x41, r17
   80:	10 a9       	sts	0x40, r17
 		EXT_RESET_OFF;
